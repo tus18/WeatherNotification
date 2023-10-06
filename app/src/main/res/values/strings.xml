@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Weather</string>
+    <string name="ラベル">天気を表示</string>
+    <string name="hello_world">Hello World!!</string>
+    <string name="button">Button</string>
+    <string name="WetherAPI">天気情報を取得</string>
+    <string name="weather_codes">Weather Codes:</string>
+</resources>
