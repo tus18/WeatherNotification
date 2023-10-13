@@ -1,5 +1,9 @@
 package com.example.weather;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -7,6 +11,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import java.util.List;
 
@@ -29,6 +36,11 @@ public class MainActivity extends AppCompatActivity {
 
         weatherCodeTextView = findViewById(R.id.weatherCodeTextView);
         fetchWeatherButton = findViewById(R.id.fetchWeatherButton);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel("weatherChannel", "Weather Notification", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(channel);
+        }
 
         fetchWeatherButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,10 +66,11 @@ public class MainActivity extends AppCompatActivity {
                     WeatherResponse weather = response.body();
 
                     // weathercodeのリストを取得
-                    List<Integer> weatherCodes = weather.getHourly().getWeathercode();
+                    List<Integer> rainAmount = weather.getHourly().getRain();
 
                     // TextViewにデータをセット
-                    weatherCodeTextView.setText("Weather codes: " + weatherCodes.toString());
+                    weatherCodeTextView.setText("雨量: " + rainAmount.toString());
+                    sendNotification("Weather codes: " + rainAmount.toString());
                 } else {
                     Toast.makeText(MainActivity.this, "データ取得失敗", Toast.LENGTH_SHORT).show();
                 }
@@ -69,4 +82,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    private void sendNotification(String weatherInfo) {
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "weatherChannel")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)  // アイコンの設定
+                .setContentTitle("天気情報")  // タイトル
+                .setContentText(weatherInfo)  // 本文
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
+
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        notificationManager.notify(1001, builder.build());
+    }
+
 }

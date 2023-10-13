@@ -13,14 +13,14 @@ public class WeatherResponse {
     }
 
     public static class Hourly {
-        private List<Integer> weathercode;
+        private List<Integer> rain;
 
-        public List<Integer> getWeathercode() {
-            return weathercode;
+        public List<Integer> getRain() {
+            return rain;
         }
 
-        public void setWeathercode(List<Integer> weathercode) {
-            this.weathercode = weathercode;
+        public void setRain(List<Integer> rain) {
+            this.rain = rain;
         }
     }
 }
