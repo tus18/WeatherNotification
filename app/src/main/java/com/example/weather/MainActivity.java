@@ -14,8 +14,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
+import java.util.Calendar;
 import java.util.List;
+import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,6 +53,25 @@ public class MainActivity extends AppCompatActivity {
                 fetchWeather();
             }
         });
+
+        // 時間の設定
+        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"));
+        calendar.set(Calendar.HOUR_OF_DAY, 2);//時
+        calendar.set(Calendar.MINUTE, 40);//分
+
+        long timeUntilNextJob = calendar.getTimeInMillis() - System.currentTimeMillis();
+        if (timeUntilNextJob < 0) {
+            // 既に9時を過ぎている場合、次の日に設定
+            timeUntilNextJob += TimeUnit.DAYS.toMillis(1);
+            //timeUntilNextJob = 0;
+        }
+
+        OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(WeatherWorker.class)
+                .setInitialDelay(timeUntilNextJob, TimeUnit.MILLISECONDS)
+                .build();
+
+        WorkManager.getInstance(this).enqueue(workRequest);
+
     }
 
     private void fetchWeather() {

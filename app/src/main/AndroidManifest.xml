@@ -3,8 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
     <!-- ネット接続を許可する -->
     <uses-permission android:name="android.permission.INTERNET" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
