@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -19,7 +20,6 @@ import androidx.work.WorkManager;
 
 import java.util.Calendar;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
@@ -27,7 +27,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
-
 public class MainActivity extends AppCompatActivity {
 
     private static final String BASE_URL = "https://api.open-meteo.com/";
@@ -55,9 +54,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         // 時間の設定
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("Asia/Tokyo"));
-        calendar.set(Calendar.HOUR_OF_DAY, 2);//時
-        calendar.set(Calendar.MINUTE, 40);//分
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 20);//時
+        calendar.set(Calendar.MINUTE, 4);//分
 
         long timeUntilNextJob = calendar.getTimeInMillis() - System.currentTimeMillis();
         if (timeUntilNextJob < 0) {
@@ -82,27 +81,32 @@ public class MainActivity extends AppCompatActivity {
 
         WeatherApi api = retrofit.create(WeatherApi.class);
         Call<WeatherResponse> call = api.getWeather();
-
+        Log.d("Debug", "API呼び出しを開始");
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful()) {
                     WeatherResponse weather = response.body();
 
+                    Log.d("Debug", "API呼び出し成功: " + weather.toString());
+
                     // weathercodeのリストを取得
-                    List<Integer> rainAmount = weather.getHourly().getRain();
+                    List<Double> rainAmount = weather.getHourly().getRain();
 
                     // TextViewにデータをセット
                     weatherCodeTextView.setText("雨量: " + rainAmount.toString());
                     sendNotification("Weather codes: " + rainAmount.toString());
                 } else {
                     Toast.makeText(MainActivity.this, "データ取得失敗", Toast.LENGTH_SHORT).show();
+                    Log.d("Debug", "API呼び出し失敗: " + response.errorBody());
                 }
             }
 
             @Override
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
+                Log.e("API_ERROR", "通信エラー", t);
                 Toast.makeText(MainActivity.this, "通信エラー", Toast.LENGTH_SHORT).show();
+
             }
         });
     }

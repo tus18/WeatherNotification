@@ -13,13 +13,13 @@ public class WeatherResponse {
     }
 
     public static class Hourly {
-        private List<Integer> rain;
+        private List<Double> rain;
 
-        public List<Integer> getRain() {
+        public List<Double> getRain() {
             return rain;
         }
 
-        public void setRain(List<Integer> rain) {
+        public void setRain(List<Double> rain) {
             this.rain = rain;
         }
     }

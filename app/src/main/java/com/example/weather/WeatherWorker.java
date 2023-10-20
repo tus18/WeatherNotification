@@ -43,7 +43,7 @@ public class WeatherWorker extends Worker {
                 if (response.isSuccessful()) {
                     // 成功時、通知を送る
                     WeatherResponse weather = response.body();
-                    List<Integer> rainAmount = weather.getHourly().getRain();
+                    List<Double> rainAmount = weather.getHourly().getRain();
                     sendNotification("雨量: " + rainAmount.toString());
                 }
             }
