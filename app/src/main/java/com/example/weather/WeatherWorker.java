@@ -2,6 +2,7 @@ package com.example.weather;
 
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -37,10 +38,12 @@ public class WeatherWorker extends Worker {
         // API呼び出し
         WeatherApi api = retrofit.create(WeatherApi.class);
         Call<WeatherResponse> call = api.getWeather();
+        Log.d("debug","API呼び出し開始");
         call.enqueue(new Callback<WeatherResponse>() {
             @Override
             public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
                 if (response.isSuccessful()) {
+                    Log.d("debug","API呼び出し成功");
                     // 成功時、通知を送る
                     WeatherResponse weather = response.body();
                     List<Double> rainAmount = weather.getHourly().getRain();
@@ -51,6 +54,7 @@ public class WeatherWorker extends Worker {
             @Override
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
                 // 失敗時、何もしない
+                Log.d("debug","API呼び出し失敗");
             }
         });
         return Result.success();

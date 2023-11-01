@@ -5,4 +5,5 @@
     <string name="button">Button</string>
     <string name="WetherAPI">天気情報を取得</string>
     <string name="weather_codes">Weather Codes:</string>
+    <string name="load">内容確認</string>
 </resources>

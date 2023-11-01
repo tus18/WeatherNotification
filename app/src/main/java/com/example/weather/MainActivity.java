@@ -2,7 +2,6 @@ package com.example.weather;
 
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -12,34 +11,45 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
 
     private static final String BASE_URL = "https://api.open-meteo.com/";
     private TextView weatherCodeTextView;
     private Button fetchWeatherButton;
+    private Button loadButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        //曜日の取得
+        Calendar cal = Calendar.getInstance();
+        int week = cal.get(Calendar.DAY_OF_WEEK);
+        Log.d("debug",Integer.toString(week));
+
+        int h,m;
+        switch(week){
+            case 0:h=12;m=0;
+            case 4:h=11;m=0;
+        }
+
         weatherCodeTextView = findViewById(R.id.weatherCodeTextView);
         fetchWeatherButton = findViewById(R.id.fetchWeatherButton);
+        loadButton = findViewById(R.id.loadButton);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel("weatherChannel", "Weather Notification", NotificationManager.IMPORTANCE_DEFAULT);
             NotificationManager manager = getSystemService(NotificationManager.class);
@@ -52,17 +62,27 @@ public class MainActivity extends AppCompatActivity {
                 fetchWeather();
             }
         });
+        loadButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                try {
+                    load();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
 
         // 時間の設定
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 20);//時
-        calendar.set(Calendar.MINUTE, 4);//分
+        calendar.set(Calendar.MINUTE, 0);//分
 
         long timeUntilNextJob = calendar.getTimeInMillis() - System.currentTimeMillis();
         if (timeUntilNextJob < 0) {
             // 既に9時を過ぎている場合、次の日に設定
-            timeUntilNextJob += TimeUnit.DAYS.toMillis(1);
-            //timeUntilNextJob = 0;
+            //timeUntilNextJob += TimeUnit.DAYS.toMillis(1);
+            timeUntilNextJob = 0;
         }
 
         OneTimeWorkRequest workRequest = new OneTimeWorkRequest.Builder(WeatherWorker.class)
@@ -74,62 +94,48 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fetchWeather() {
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        String message = "";
+        String fileName = "myFile.txt";
+        String inputText = "12 30";
 
-        WeatherApi api = retrofit.create(WeatherApi.class);
-        Call<WeatherResponse> call = api.getWeather();
-        Log.d("Debug", "API呼び出しを開始");
-        call.enqueue(new Callback<WeatherResponse>() {
-            @Override
-            public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
-                if (response.isSuccessful()) {
-                    WeatherResponse weather = response.body();
+        try {
+            FileOutputStream outStream = openFileOutput(fileName, MODE_PRIVATE);
+            OutputStreamWriter writer = new OutputStreamWriter(outStream);
+            writer.write(inputText);
+            writer.flush();
+            writer.close();
+            Log.d("debug","成功");
 
-                    Log.d("Debug", "API呼び出し成功: " + weather.toString());
-
-                    // weathercodeのリストを取得
-                    List<Double> rainAmount = weather.getHourly().getRain();
-
-                    // TextViewにデータをセット
-                    weatherCodeTextView.setText("雨量: " + rainAmount.toString());
-                    sendNotification("Weather codes: " + rainAmount.toString());
-                } else {
-                    Toast.makeText(MainActivity.this, "データ取得失敗", Toast.LENGTH_SHORT).show();
-                    Log.d("Debug", "API呼び出し失敗: " + response.errorBody());
-                }
-            }
-
-            @Override
-            public void onFailure(Call<WeatherResponse> call, Throwable t) {
-                Log.e("API_ERROR", "通信エラー", t);
-                Toast.makeText(MainActivity.this, "通信エラー", Toast.LENGTH_SHORT).show();
-
-            }
-        });
-    }
-
-    private void sendNotification(String weatherInfo) {
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "weatherChannel")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)  // アイコンの設定
-                .setContentTitle("天気情報")  // タイトル
-                .setContentText(weatherInfo)  // 本文
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
-
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(this);
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+            message = "File saved.";
+        } catch (FileNotFoundException e) {
+            Log.d("debug","ファイルなし");
+            e.printStackTrace();
+        } catch (IOException e) {
+            message = e.getMessage();
+            e.printStackTrace();
         }
-        notificationManager.notify(1001, builder.build());
+
+        Toast.makeText(getBaseContext(), message, Toast.LENGTH_LONG).show();
     }
+
+    private void load() throws IOException {
+        FileInputStream fileInputStream = openFileInput("myFile.txt");
+        BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream, "UTF-8"));
+        
+        String lineBuffer;
+        ArrayList<String> text = new ArrayList<>();
+        while (true){
+            lineBuffer = reader.readLine();
+            if (lineBuffer != null){
+                text.add(lineBuffer);
+            }
+            else {
+                break;
+            }
+        }
+        weatherCodeTextView.setText("kousinn " + text);
+    }
+
+
 
 }
