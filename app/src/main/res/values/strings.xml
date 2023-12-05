@@ -3,7 +3,16 @@
     <string name="ラベル">天気を表示</string>
     <string name="hello_world">Hello World!!</string>
     <string name="button">Button</string>
-    <string name="WetherAPI">天気情報を取得</string>
+    <string name="WetherAPI">設定の保存</string>
     <string name="weather_codes">Weather Codes:</string>
     <string name="load">内容確認</string>
+    <string-array name="days_array">
+        <item>日曜日</item>
+        <item>月曜日</item>
+        <item>火曜日</item>
+        <item>水曜日</item>
+        <item>木曜日</item>
+        <item>金曜日</item>
+        <item>土曜日</item>
+    </string-array>
 </resources>
